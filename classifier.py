@@ -525,54 +525,54 @@
 #             predictions.append(prediction)
 #         return predictions
 #
-# #working attempt 2
-import numpy as np
-
-class Classifier:
-    def __init__(self):
-        self.weights = None
-
-    def reset(self):
-        self.weights = None
-
-    def fit(self, data, target):
-        num_features = len(data[0])
-        num_classes = len(np.unique(target))
-        num_samples = len(data)
-
-        # Initialize weights randomly
-        self.weights = np.random.randn(num_features, num_classes)
-
-        # One-hot encode the target labels
-        target_onehot = np.zeros((num_samples, num_classes))
-        target_onehot[np.arange(num_samples), target] = 1
-
-        # Train the weights using perceptron learning algorithm
-        learning_rate = 0.1
-        num_iterations = 100
-        for i in range(num_iterations):
-            for j in range(num_samples):
-                y_pred = np.dot(data[j], self.weights)
-                error = target_onehot[j] - y_pred
-                delta = learning_rate * np.outer(data[j], error)
-                self.weights += delta
-
-    def predict(self, data, legal=None):
-        if self.weights is None:
-            return 0  # Default action if not yet trained
-
-        # Calculate scores for each possible action
-        scores = np.dot(data, self.weights)
-
-        # Find the action with the highest score
-        if legal is None:
-            return np.argmax(scores)
-        else:
-            legal_mask = np.zeros_like(scores, dtype=bool)
-            #legal_mask[legal] = True
-            scores[~legal_mask] = -np.inf
-            print(np.argmax(scores))
-            return np.argmax(scores)
+# # #working attempt 2
+# import numpy as np
+#
+# class Classifier:
+#     def __init__(self):
+#         self.weights = None
+#
+#     def reset(self):
+#         self.weights = None
+#
+#     def fit(self, data, target):
+#         num_features = len(data[0])
+#         num_classes = len(np.unique(target))
+#         num_samples = len(data)
+#
+#         # Initialize weights randomly
+#         self.weights = np.random.randn(num_features, num_classes)
+#
+#         # One-hot encode the target labels
+#         target_onehot = np.zeros((num_samples, num_classes))
+#         target_onehot[np.arange(num_samples), target] = 1
+#
+#         # Train the weights using perceptron learning algorithm
+#         learning_rate = 0.1
+#         num_iterations = 100
+#         for i in range(num_iterations):
+#             for j in range(num_samples):
+#                 y_pred = np.dot(data[j], self.weights)
+#                 error = target_onehot[j] - y_pred
+#                 delta = learning_rate * np.outer(data[j], error)
+#                 self.weights += delta
+#
+#     def predict(self, data, legal=None):
+#         if self.weights is None:
+#             return 0  # Default action if not yet trained
+#
+#         # Calculate scores for each possible action
+#         scores = np.dot(data, self.weights)
+#
+#         # Find the action with the highest score
+#         if legal is None:
+#             return np.argmax(scores)
+#         else:
+#             legal_mask = np.zeros_like(scores, dtype=bool)
+#             #legal_mask[legal] = True
+#             scores[~legal_mask] = -np.inf
+#             print(np.argmax(scores))
+#             return np.argmax(scores)
 #
 # not working
 # import numpy as np
@@ -670,3 +670,263 @@ class Classifier:
 #
 #         # Return the predicted classes
 #         return y_pred_class.astype(int)
+#
+# # working perceptron implementation with 1 hidden layer and bayes
+# import numpy as np
+#
+# class Classifier:
+#     def __init__(self):
+#         self.weights = None
+#
+#     def reset(self):
+#         self.weights = None
+#
+#     def fit(self, data, target):
+#         # Convert data and target to numpy arrays
+#         learning_rate = 0.1
+#         num_epochs = 100
+#         data = np.array(data)
+#         target = np.array(target)
+#
+#         # Add a bias term to the data
+#         data = np.insert(data, 0, 1, axis=1)
+#
+#         # Initialize weights to zeros
+#         num_features = data.shape[1]
+#         self.weights = np.zeros(num_features)
+#
+#         # Train the classifier using stochastic gradient descent
+#         for epoch in range(num_epochs):
+#             for i in range(data.shape[0]):
+#                 x = data[i]
+#                 y = target[i]
+#
+#                 # Compute the predicted output
+#                 z = np.dot(self.weights, x)
+#                 y_pred = np.sign(z)
+#
+#                 # Update the weights if the prediction is incorrect
+#                 if y != y_pred:
+#                     self.weights += learning_rate * y * x
+#
+#     def predict(self, data, legal=None):
+#         # Convert data to numpy array
+#         data = np.array(data)
+#
+#         # Add a bias term to the data
+#         data = np.insert(data, 0, 1)
+#
+#         # Compute the predicted outputs
+#         z = np.dot(data, self.weights)
+#         y_pred = np.sign(z)
+#
+#         # Convert the predicted outputs to actions
+#         actions = np.where(y_pred == 1)[0]
+#         if legal is not None:
+#             actions = np.intersect1d(actions, legal)
+#         if len(actions) > 0:
+#             return actions[0]
+#         else:
+#             return np.random.choice(legal)
+
+# classifier.py
+# Lin Li/26-dec-2021
+#
+# Use the skeleton below for the classifier and insert your code here.
+
+# import numpy as np
+#
+#
+# class Classifier:
+#     def __init__(self):
+#         self.weights = []
+#         self.biases = []
+#         self.n_layers = 0
+#
+#     def reset(self):
+#         self.weights = []
+#         self.biases = []
+#         self.n_layers = 0
+#
+#     def fit(self, data, target):
+#         data = np.array(data)
+#         hidden_layers = [10]
+#         self.n_layers = len(hidden_layers) + 1
+#
+#         # Initialize weights and biases randomly
+#         input_size = data.shape[1]
+#         output_size = len(np.unique(target))
+#         layer_sizes = [input_size] + hidden_layers + [output_size]
+#         for i in range(self.n_layers):
+#             self.weights.append(np.random.randn(layer_sizes[i], layer_sizes[i + 1]))
+#             self.biases.append(np.random.randn(layer_sizes[i + 1]))
+#
+#         # Train the network using stochastic gradient descent
+#         learning_rate = 0.1
+#         n_epochs = 1000
+#         batch_size = 32
+#         n_batches = int(np.ceil(data.shape[0] / batch_size))
+#         for epoch in range(n_epochs):
+#             for b in range(n_batches):
+#                 # Get the batch of data and target values
+#                 batch_data = data[b * batch_size:(b + 1) * batch_size, :]
+#                 batch_target = target[b * batch_size:(b + 1) * batch_size]
+#
+#                 # Forward propagation
+#                 a = batch_data
+#                 for i in range(self.n_layers):
+#                     z = np.dot(a, self.weights[i]) + self.biases[i]
+#                     a = self.sigmoid(z)
+#
+#                 # Backward propagation
+#                 delta = (a - self.one_hot_encode(batch_target)) * self.sigmoid_derivative(a)
+#                 for i in reversed(range(self.n_layers)):
+#                     grad_w = np.dot(a.T, delta)
+#                     grad_b = np.sum(delta, axis=0)
+#                     delta = np.dot(delta, self.weights[i].T) * self.sigmoid_derivative(z)
+#                     self.weights[i] -= learning_rate.T * grad_w
+#                     self.biases[i] -= learning_rate * grad_b
+#
+#     def predict(self, data, legal=None):
+#         # Perform feedforward to get predicted output
+#         a = data
+#         for i in range(self.n_layers):
+#             z = np.dot(a, self.weights[i]) + self.biases[i]
+#             a = self.sigmoid(z)
+#         predicted_output = np.argmax(a, axis=1)
+#         return predicted_output
+#
+#     def sigmoid(self, x):
+#         return 1 / (1 + np.exp(-x))
+#
+#     def sigmoid_derivative(self, x):
+#         return x * (1 - x)
+#
+#     def one_hot_encode(self, y):
+#         n_classes = len(np.unique(y))
+#         encoded = np.zeros((len(y), n_classes))
+#         for i in range(len(y)):
+#             encoded[i, y[i]] = 1
+#         return encoded
+
+
+import numpy as np
+
+
+class Classifier:
+    def __init__(self):
+        self.weights = []
+        self.biases = []
+        self.n_layers = 0
+
+    def reset(self):
+        self.weights = []
+        self.biases = []
+        self.n_layers = 0
+
+    def fit(self, data, target):
+        hidden_layers = [10]
+        data = np.array(data)
+        self.n_layers = len(hidden_layers) + 1
+
+        # Initialize weights and biases randomly
+        input_size = data.shape[1]
+        output_size = len(np.unique(target))
+        layer_sizes = [input_size] + hidden_layers + [output_size]
+        for i in range(self.n_layers):
+            self.weights.append(np.random.randn(layer_sizes[i+1], layer_sizes[i]))
+            self.biases.append(np.random.randn(layer_sizes[i + 1], 1))
+
+        # Train the network using stochastic gradient descent
+        learning_rate = 0.1
+        n_epochs = 1000
+        batch_size = 32
+        n_batches = int(np.ceil(data.shape[0] / batch_size))
+        for epoch in range(n_epochs):
+            for b in range(n_batches):
+                # Get the batch of data and target values
+                batch_data = data[b * batch_size:(b + 1) * batch_size, :]
+                batch_target = target[b * batch_size:(b + 1) * batch_size]
+
+                # Forward propagation
+                a = batch_data.T
+                z_list = []
+                for i in range(self.n_layers):
+                    z = np.dot(a, self.weights[i]) + self.biases[i]
+                    z_list.append(z)
+                    a = self.sigmoid(z)
+
+                # Backward propagation
+                delta = (a - self.one_hot_encode(batch_target).T) * self.sigmoid_derivative(a)
+                for i in reversed(range(self.n_layers)):
+                    grad_w = np.dot(a.T, delta)
+                    grad_b = np.sum(delta, axis=1, keepdims=True)
+                    delta = np.dot(delta, self.weights[i].T) * self.sigmoid_derivative(z_list[i - 1]) if i > 0 else delta
+                    print(learning_rate * grad_w)
+                    print(self.weights[i])
+                    self.weights[i] -= (learning_rate * grad_w)
+                    self.biases[i] -= (learning_rate * grad_b)
+
+    # def fit(self, data, target, hidden_layers=[10]):
+    #
+    #     data = np.array(data)
+    #     self.n_layers = len(hidden_layers) + 1
+    #
+    #     # Initialize weights and biases randomly
+    #     input_size = data.shape[1]
+    #     output_size = len(np.unique(target))
+    #     layer_sizes = [input_size] + hidden_layers + [output_size]
+    #     for i in range(self.n_layers):
+    #         self.weights.append(np.random.randn(layer_sizes[i + 1], layer_sizes[i]))
+    #         self.biases.append(np.random.randn(layer_sizes[i + 1], 1))
+    #
+    #     # Train the network using stochastic gradient descent
+    #     learning_rate = 0.1
+    #     n_epochs = 1000
+    #     batch_size = 32
+    #     n_batches = int(np.ceil(data.shape[0] / batch_size))
+    #     for epoch in range(n_epochs):
+    #         for b in range(n_batches):
+    #             # Get the batch of data and target values
+    #             batch_data = data[b * batch_size:(b + 1) * batch_size, :]
+    #             batch_target = target[b * batch_size:(b + 1) * batch_size]
+    #
+    #             # Forward propagation
+    #             a = batch_data.T
+    #             z_list = []
+    #             for i in range(self.n_layers):
+    #                 z = np.dot(self.weights[i], a) + self.biases[i]
+    #                 z_list.append(z)
+    #                 a = self.sigmoid(z)
+    #
+    #             # Backward propagation
+    #             delta = (a - self.one_hot_encode(batch_target).T) * self.sigmoid_derivative(a)
+    #             for i in reversed(range(self.n_layers)):
+    #                 grad_w = np.dot(delta, a.T)
+    #                 grad_b = np.sum(delta, axis=1, keepdims=True)
+    #                 delta = np.dot(self.weights[i].T, delta) * self.sigmoid_derivative(
+    #                     z_list[i - 1]) if i > 0 else delta
+    #                 self.weights[i] -= learning_rate * grad_w
+    #                 self.biases[i] -= learning_rate * grad_b
+
+    def predict(self, data, legal=None):
+        # Perform feedforward to get predicted output
+        a = data
+        for i in range(self.n_layers):
+            z = np.dot(a, self.weights[i]) + self.biases[i]
+            a = self.sigmoid(z)
+        predicted_output = np.argmax(a, axis=1)
+        return predicted_output
+
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
+
+    def sigmoid_derivative(self, x):
+        return x * (1 - x)
+
+    def one_hot_encode(self, y):
+        n_classes = len(np.unique(y))
+        encoded = np.zeros((len(y), n_classes))
+        for i in range(len(y)):
+            encoded[i, y[i]] = 1
+        return encoded
