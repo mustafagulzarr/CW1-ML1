@@ -303,7 +303,6 @@
 #         return prediction
 
 
-
 # second attempt
 # classifier.py
 # Lin Li/26-dec-2021
@@ -429,8 +428,6 @@
 #
 #         # Convert the probabilities to class labels
 #         return np.argmax(y, axis=0)
-
-
 
 
 # # classifier.py
@@ -1045,47 +1042,122 @@
 #             return np.random.choice(legal)
 
 import numpy as np
+
 class Classifier:
     def __init__(self):
-        self.data = []
+        self.wallData = []
+        self.foodData = []
+        self.ghostData = []
+        self.ghostInFrontData = []
+        self.restData = []
+
         self.target = []
         self.num_classes = 0
-        self.support_vectors = []
-        self.weights = []
-        self.bias = 0
+
+        self.wallWeights = []
+        self.foodWeights = []
+        self.ghostWeights = []
+        self.ghostInFrontWeights = []
+        self.restWeights = []
+
+        self.wallBias = 0
+        self.foodBias = 0
+        self.ghostBias = 0
+        self.ghostInFrontBias = 0
+        self.restBias = 0
 
     def reset(self):
-        self.data = []
+        self.wallData = []
+        self.foodData = []
+        self.ghostData = []
+        self.ghostInFrontData = []
+        self.restData = []
+
         self.target = []
         self.num_classes = 0
-        self.support_vectors = []
-        self.weights = []
-        self.bias = 0
+
+        self.wallWeights = []
+        self.foodWeights = []
+        self.ghostWeights = []
+        self.ghostInFrontWeights = []
+        self.restWeights = []
+
+        self.wallBias = 0
+        self.foodBias = 0
+        self.ghostBias = 0
+        self.ghostInFrontBias = 0
+        self.restBias = 0
 
     def fit(self, data, target):
-        self.data = np.array(data)
+
+        print(data)
+        self.wallData = self.splittingData(data, 0, 4)
+        self.foodData = self.splittingData(data, 4, 8)
+        self.ghostData = self.splittingData(data, 8, 16)
+        self.ghostInFrontData = self.splittingData(data, 16, 16)
+        self.restData = self.splittingData(data, 16, len(data))
+
         self.target = np.array(target)
         self.num_classes = len(np.unique(target))
 
         # one-vs-all multiclass SVM
+        self.wallWeights, self.wallBias = self.weightsBiasPerClass(self.wallData, self.target)
+        self.foodWeights, self.foodBias = self.weightsBiasPerClass(self.foodData, self.target)
+        self.ghostWeights, self.ghostBias = self.weightsBiasPerClass(self.ghostData, self.target)
+        self.ghostInFrontWeights, self.ghostInFrontBias = self.weightsBiasPerClass(self.ghostInFrontData, self.target)
+        self.restWeights, self.restBias = self.weightsBiasPerClass(self.restData, self.target)
+
+    def weightsBiasPerClass(self, data, target):
+        weights = []
+        bias = 0
         for i in range(self.num_classes):
-            targets = np.where(self.target == i, 1, -1)
-            weights, bias = self._svm_train(self.data, targets)
-            self.weights.append(weights)
-            self.bias += bias
+            targets = np.where(target == i, 1, -1)
+            weights, bias = self._svm_train(data, targets)
+        return weights, bias
+
+    @staticmethod
+    def splittingData(data, start, end):
+        dataCategory = []
+        for i in data:
+            dataCategory.append(i[start:end])
+        return np.array(dataCategory)
 
     def predict(self, data, legal=None):
-        if not self.weights:
+
+        wallData = data[0:4]
+        foodData = data[4:8]
+        ghostData = data[8:16]
+        ghostInFrontData = data[16:16]
+        restData = data[16:]
+
+        scores = []
+        scoresWall = self.predictPerClass(wallData, self.wallWeights, self.wallBias)
+        scores.append(scoresWall)
+        scoresFood = self.predictPerClass(foodData, self.foodWeights, self.foodBias)
+        scores.append(scoresFood)
+        scoresGhost = self.predictPerClass(ghostData, self.ghostWeights, self.ghostBias)
+        scores.append(scoresGhost)
+        scoresGhostInFront = self.predictPerClass(ghostInFrontData, self.ghostInFrontWeights, self.ghostInFrontBias)
+        scores.append(scoresGhostInFront)
+        scoresRest = self.predictPerClass(restData, self.wallWeights, self.wallBias)
+        scores.append(scoresRest)
+
+        return np.argmax(scores)
+
+    def predictPerClass(self, dataCategory, weightsCategory, biasCategory):
+
+        # Checks if the weights of each category is null
+        if len(weightsCategory) == 0:
             return 0
 
         # compute scores for each class
-        scores = []
+        scoresPerClass = []
         for i in range(self.num_classes):
-            score = np.dot(data, self.weights[i]) + self.bias
-            scores.append(score)
+            scorePerClass = np.dot(dataCategory, weightsCategory[i]) + biasCategory
+            scoresPerClass.append(scorePerClass)
 
-        # return the class with the highest score
-        return np.argmax(scores)
+        # return the highest score within each class
+        return np.argmax(scoresPerClass)
 
     def _svm_train(self, data, targets):
         num_samples, num_features = data.shape
@@ -1095,16 +1167,15 @@ class Classifier:
         bias = 0
 
         # learning rate
-        lr = 1
+        learningRate = 1
 
         # number of iterations
-        num_iters = 1000
+        num_iters = 100
 
         # gradient descent training
         for i in range(num_iters):
             for j in range(num_samples):
                 if targets[j] * (np.dot(weights, data[j]) + bias) <= 1:
-                    weights += lr * (targets[j] * data[j] - 2 * weights / num_samples)
-                    bias += lr * targets[j]
-
+                    weights += learningRate * (targets[j] * data[j] - 2 * weights / num_samples)
+                    bias += learningRate * targets[j]
         return weights, bias
